@@ -1,274 +1,112 @@
 #include <iostream>
-#include <vector>
-#include <list>
-#include <stdio.h>
-#include <stdlib.h>
 #include "trees_pattern.h"
 
 using namespace std;
 
-// Типы деревьев
-enum class TreeType : int {
-    Oak,
-    Pine,
-    Birch,
-    Unknown
-};
+// Реализация методов стратегий
+void NaturalGrowthStrategy::ExecuteGrowth() {
+    cout << "Growing naturally..." << endl;
+}
 
-class Tree // Родительский (базовый) класс "Дерево"
-{
-private:
-    TreeType Type;
-    double Height;
-    int Age;
+void FastGrowthStrategy::ExecuteGrowth() {
+    cout << "Growing fast..." << endl;
+}
 
-protected:
-    bool IsHealthy;
+void SlowGrowthStrategy::ExecuteGrowth() {
+    cout << "Growing slowly..." << endl;
+}
 
-public:
-    Tree(TreeType type) : Type(type), Height(0.0), Age(0), IsHealthy(false)
-    {
-        IsHealthy = static_cast<bool>(rand()%2);
+// Реализация фабричного метода
+GrowthStrategy* CreateGrowthStrategy(GrowthStrategyType type) {
+    switch(type) {
+        case GrowthStrategyType::NaturalGrowth:
+            return new NaturalGrowthStrategy();
+        case GrowthStrategyType::FastGrowth:
+            return new FastGrowthStrategy();
+        case GrowthStrategyType::SlowGrowth:
+            return new SlowGrowthStrategy();
+        default:
+            return new NaturalGrowthStrategy();
     }
+}
 
-    virtual ~Tree() {}
+// Реализация методов Tree
+Tree::Tree(TreeType type) : Type(type), Height(0.0), Age(0), IsHealthy(true),
+                           growthStrategy(new NaturalGrowthStrategy()) {}
 
-    bool Healthy() const { return IsHealthy; }
-    TreeType GetType() const { return Type; }
-    double GetHeight() const { return Height; }
-    int GetAge() const { return Age; }
+Tree::~Tree() {
+    delete growthStrategy;
+}
 
-    virtual void Grow()
-    {
-        if(Healthy())
-        {
-            cout << "Growing a HEALTHY tree... ";
-        }
-        else
-        {
-            cout << "Growing a SICK tree... ";
-        }
+void Tree::SetGrowthStrategy(GrowthStrategyType strategyType) {
+    delete growthStrategy;
+    growthStrategy = CreateGrowthStrategy(strategyType);
+}
+
+void Tree::Grow() {
+    if(Healthy()) {
+        growthStrategy->ExecuteGrowth();
+        Height += 0.5;
+        Age++;
+    } else {
+        cout << "Cannot grow - tree is sick!" << endl;
     }
-};
+}
 
-class Oak : public Tree
-{
-public:
-    Oak();
-    ~Oak() {}
+// Реализация методов конкретных деревьев
+Oak::Oak() : Tree(TreeType::Oak) {}
 
-    void Grow() override;
-};
-
-Oak::Oak() : Tree(TreeType::Oak) { }
-
-void Oak::Grow()
-{
+void Oak::Grow() {
+    cout << "Oak tree: ";
     Tree::Grow();
-    cout << "Growing oak..." << endl;
 }
 
-class Pine : public Tree
-{
-public:
-    Pine() : Tree(TreeType::Pine) { }
-    ~Pine() {}
+Pine::Pine() : Tree(TreeType::Pine) {}
 
-    void Grow() override;
-};
-
-void Pine::Grow()
-{
+void Pine::Grow() {
+    cout << "Pine tree: ";
     Tree::Grow();
-    cout << "Growing pine..." << endl;
 }
 
-class Birch : public Tree
-{
-public:
-    Birch() : Tree(TreeType::Birch) { }
-    ~Birch() {}
+Birch::Birch() : Tree(TreeType::Birch) {}
 
-    void Grow();
-};
-
-void Birch::Grow()
-{
+void Birch::Grow() {
+    cout << "Birch tree: ";
     Tree::Grow();
-    cout << "Growing birch..." << endl;
 }
 
-enum class TreeSpecies : int {
-    Oak = 1,
-    Pine = 2,
-    Birch = 3,
-    Undefined = 0
-};
+int main() {
+    // Демонстрация паттерна Стратегия
+    cout << "Strategy Pattern" << endl;
 
-Tree *CreateTree(TreeSpecies type)
-{
-    Tree *newTree = nullptr;
+    // Создаем деревья с разными стратегиями
+    Oak oak;
+    Pine pine;
+    Birch birch;
 
-    if(type == TreeSpecies::Oak)
-    {
-        newTree = new Oak;
-    }
-    else if(type == TreeSpecies::Pine)
-    {
-        newTree = new Pine;
-    }
-    else if(type == TreeSpecies::Birch)
-    {
-        newTree = new Birch;
-    }
+    // Устанавливаем стратегии
+    oak.SetGrowthStrategy(GrowthStrategyType::NaturalGrowth);
+    pine.SetGrowthStrategy(GrowthStrategyType::FastGrowth);
+    birch.SetGrowthStrategy(GrowthStrategyType::SlowGrowth);
 
-    return newTree;
-}
+    cout << endl;
+    // Тестируем стратегии
+    cout << "First growth:" << endl;
+    oak.Grow();
+    pine.Grow();
+    birch.Grow();
 
-class TreeSpeciesDecorator : public IteratorDecorator<class Tree*>
-{
-private:
-    TreeSpecies TargetSpecies;
-public:
-    TreeSpeciesDecorator(Iterator<Tree*> *it, TreeSpecies species)
-    : IteratorDecorator<Tree*>(it), TargetSpecies(species) {}
+    cout << endl;
+    // Динамическая смена поведения объекта
+    cout << "Changing oak to fast growth:" << endl;
+    oak.SetGrowthStrategy(GrowthStrategyType::FastGrowth);
+    oak.Grow();
 
-    void First()
-    {
-        It->First();
-        while(!It->IsDone() && It->GetCurrent()->GetType() != static_cast<TreeType>(TargetSpecies))
-        {
-            It->Next();
-        }
-    }
-
-    void Next()
-    {
-        do
-        {
-            It->Next();
-        } while(!It->IsDone() && It->GetCurrent()->GetType() != static_cast<TreeType>(TargetSpecies));
-    }
-};
-
-class TreeHealthDecorator : public IteratorDecorator<class Tree*>
-{
-private:
-    bool TargetHealth;
-public:
-    TreeHealthDecorator(Iterator<Tree*> *it, bool isHealthy)
-    : IteratorDecorator<Tree*>(it), TargetHealth(isHealthy) {}
-
-    void First()
-    {
-        It->First();
-        while(!It->IsDone() && It->GetCurrent()->Healthy() != TargetHealth)
-        {
-            It->Next();
-        }
-    }
-
-    void Next()
-    {
-        do
-        {
-            It->Next();
-        } while(!It->IsDone() && It->GetCurrent()->Healthy() != TargetHealth);
-    }
-};
-
-void GrowAll(Iterator<Tree*> *it)
-{
-    for(it->First(); !it->IsDone(); it->Next())
-    {
-        Tree *currentTree = it->GetCurrent();
-        currentTree->Grow();
-    }
-}
-
-void GrowAllHealthy(Iterator<Tree*> *it)
-{
-    for(it->First(); !it->IsDone(); it->Next())
-    {
-        Tree *currentTree = it->GetCurrent();
-        if(!currentTree->Healthy()) continue;
-
-        currentTree->Grow();
-    }
-}
-
-void GrowAllPines(Iterator<Tree*> *it)
-{
-    for(it->First(); !it->IsDone(); it->Next())
-    {
-        Tree *currentTree = it->GetCurrent();
-        if(currentTree->GetType() != TreeType::Pine) continue;
-
-        currentTree->Grow();
-    }
-}
-
-int main()
-{
-    setlocale(LC_ALL, "RUS");
-
-    size_t N = 30;
-
-    ArrayClass<Tree*> treeArray;
-    for(size_t i=0; i<N; i++)
-    {
-        int tree_num = rand()%3+1;
-        TreeSpecies tree_type = static_cast<TreeSpecies>(tree_num);
-        Tree *newTree = CreateTree(tree_type);
-        treeArray.Add(newTree);
-    }
-
-    wcout << L"Размер массива деревьев: " << treeArray.Size() << endl;
-
-    list<Tree*> treeList;
-    for(size_t i=0; i<N; i++)
-    {
-        int tree_num = rand()%3+1;
-        TreeSpecies tree_type = static_cast<TreeSpecies>(tree_num);
-        Tree *newTree = CreateTree(tree_type);
-        treeList.push_back(newTree);
-    }
-
-    wcout << L"Размер списка деревьев: " << treeList.size() << endl;
-
-    cout << endl << "Growing all in a simple loop:" << endl;
-    for(size_t i=0; i<treeArray.Size(); i++)
-    {
-        Tree *currentTree = treeArray[i];
-        currentTree->Grow();
-    }
-
-    cout << endl << "Growing all using iterator:" << endl;
-    Iterator<Tree*> *allIt = treeArray.GetIterator();
-    GrowAll(allIt);
-    delete allIt;
-
-    cout << endl << "Growing all healthy using iterator:" << endl;
-    Iterator<Tree*> *healthyIt = new TreeHealthDecorator(treeArray.GetIterator(), true);
-    GrowAll(healthyIt);
-    delete healthyIt;
-
-    cout << endl << "Growing all pines using iterator:" << endl;
-    Iterator<Tree*> *pineIt = new TreeSpeciesDecorator(treeArray.GetIterator(), TreeSpecies::Pine);
-    GrowAll(pineIt);
-    delete pineIt;
-
-    cout << endl << "Growing all healthy pines using iterator:" << endl;
-    Iterator<Tree*> *healthyPineIt =
-        new TreeHealthDecorator(new TreeSpeciesDecorator(treeArray.GetIterator(), TreeSpecies::Pine), true);
-    GrowAll(healthyPineIt);
-    delete healthyPineIt;
-
-    cout << endl << "Growing all healthy pines using adapted iterator (another container):" << endl;
-    Iterator<Tree*> *adaptedIt = new ConstIteratorAdapter<std::list<Tree*>, Tree*>(&treeList);
-    Iterator<Tree*> *adaptedPineIt = new TreeHealthDecorator(new TreeSpeciesDecorator(adaptedIt, TreeSpecies::Pine), true);
-    GrowAll(adaptedPineIt);
-    delete adaptedPineIt;
+    // Показываем состояние деревьев
+    cout << "Tree states:" << endl;
+    cout << "Oak - height: " << oak.GetHeight() << ", age: " << oak.GetAge() << endl;
+    cout << "Pine - height: " << pine.GetHeight() << ", age: " << pine.GetAge() << endl;
+    cout << "Birch - height: " << birch.GetHeight() << ", age: " << birch.GetAge() << endl;
 
     return 0;
 }

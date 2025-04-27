@@ -1,160 +1,88 @@
 #ifndef TREES_PATTERN_H
 #define TREES_PATTERN_H
 
+#include <iostream>
+#include <cstdlib>
 
-// Шаблонный класс, реализующий паттерн "Итератор"
-// (класс абстрактный, так как содержит функции без реализации)
+// РўРёРї СЃС‚СЂР°С‚РµРіРёРё СЂРѕСЃС‚Р°
+enum class GrowthStrategyType {
+    NaturalGrowth,
+    FastGrowth,
+    SlowGrowth
+};
 
-template<typename T> // T - подставляемый тип данных (элемент контейнера)
-class Iterator {
+// РђР±СЃС‚СЂР°РєС‚РЅР°СЏ СЃС‚СЂР°С‚РµРіРёСЏ
+class GrowthStrategy {
+public:
+    virtual ~GrowthStrategy() {}
+    virtual void ExecuteGrowth() = 0;
+};
+
+// РўРёРїС‹ РґРµСЂРµРІСЊРµРІ
+enum class TreeType {
+    Oak,
+    Pine,
+    Birch
+};
+
+// Р‘Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РґРµСЂРµРІР°
+class Tree {
 protected:
-    Iterator() {}
-public:
-    virtual ~Iterator() {}
-    virtual void First() = 0; // Спозиционироваться на начале контейнера
-    virtual void Next() = 0;  // Перейти к следующему элементу
-    virtual bool IsDone() const = 0;  // Проверить, достигнут ли конец
-    virtual T GetCurrent() const = 0; // Получить текущий элемент
-};
-
-// Реализация паттерна "Итератор",
-// предназначенная для обхода стека
-
-template<typename T>
-class StackIterator : public Iterator<T> {
-private:
-    T *StackContainer; // Указатель на массив
-    size_t Pos; // Текущее положение в массиве
-    size_t Size; // Размер массива
-public:
-    StackIterator(T *container, size_t size)
-    : StackContainer(container), Pos(0), Size(size) {}
-
-    void First() override { Pos = 0; }
-    void Next() override { Pos++; }
-    bool IsDone() const override { return (Pos >= Size); }
-    T GetCurrent() const override { return StackContainer[Pos]; }
-};
-
-// Шаблонный класс "Стек"
-
-const size_t MaxSize = 100;
-
-template <typename T> // T - подставляемый тип данных
-class StackClass {
-private:
-    // Собственно контейнер, содержащий данные типа T
-    T Items[MaxSize];
-
-    // Индекс элемента стека, следующего за верхним
-    size_t Top;
+    TreeType Type;
+    double Height;
+    int Age;
+    bool IsHealthy;
+    GrowthStrategy* growthStrategy;
 
 public:
-    // Проверка того, является ли стек пустым
-    bool IsEmpty() const { return (Top == 0); }
+    Tree(TreeType type);
+    virtual ~Tree();
 
-    // Определение размера стека
-    size_t Size() const { return Top; }
+    void SetGrowthStrategy(GrowthStrategyType strategyType);
+    virtual void Grow();
 
-    // Поместить в стек новый элемент
-    void Push(T newObject) { Items[Top++] = newObject; }
-
-    // Извлечь из списка верхний элемент
-    T Pop() { return Items[--Top]; }
-
-    // Получение элемента по индексу
-    T GetElementByIndex(size_t index) const { return Items[index]; }
-
-    // Конструктор
-    StackClass() : Top(0) {}
-
-    // Получить итератор для обхода контейнера
-    class Iterator<T> *GetIterator()
-    {
-        return new StackIterator<T>(Items, Top);
-    };
+    bool Healthy() const { return IsHealthy; }
+    TreeType GetType() const { return Type; }
+    double GetHeight() const { return Height; }
+    int GetAge() const { return Age; }
 };
 
-// Реализация паттерна "Итератор",
-// предназначенная для обхода массива
-
-template<typename T>
-class ArrayIterator : public Iterator<T> {
-private:
-    const T *ArrayContainer; // Указатель на массив
-    size_t Pos; // Текущее положение в массиве
-    size_t Size; // Размер массива
+// РљРѕРЅРєСЂРµС‚РЅС‹Рµ СЃС‚СЂР°С‚РµРіРёРё
+class NaturalGrowthStrategy : public GrowthStrategy {
 public:
-    ArrayIterator(T *container, size_t size)
-    : ArrayContainer(container), Pos(0), Size(size) {}
-
-    void First() override { Pos = 0; }
-    void Next() override { Pos++; }
-    bool IsDone() const override { return (Pos >= Size); }
-    T GetCurrent() const override { return ArrayContainer[Pos]; }
+    void ExecuteGrowth() override;
 };
 
-// Шаблонный класс "Массив"
-
-template <typename T>
-class ArrayClass {
-private:
-    T Items[MaxSize];
-    size_t ArraySize;
+class FastGrowthStrategy : public GrowthStrategy {
 public:
-    void Add(T newObject) { Items[ArraySize++] = newObject; }
-    size_t Size() const { return ArraySize; }
-
-    // Первый вариант получения элемента по индексу (перегрузка оператора [])
-    T operator[](size_t index) const { return Items[index]; }
-
-    // Второй вариант получения элемента по индексу
-    T GetElement(size_t index) const { return Items[index]; }
-
-    // Получить итератор для обхода контейнера
-    class Iterator<T> *GetIterator()
-    {
-        return new ArrayIterator<T>(Items, ArraySize);
-    };
-
-    ArrayClass() : ArraySize(0) {}
+    void ExecuteGrowth() override;
 };
 
-// Декоратор для итератора (пустой)
-
-template<typename T>
-class IteratorDecorator : public Iterator<T> {
-protected:
-    Iterator<T> *It;
+class SlowGrowthStrategy : public GrowthStrategy {
 public:
-    IteratorDecorator(Iterator<T> *it) : It(it) {}
-    virtual ~IteratorDecorator() { delete It; }
-    virtual void First() { It->First(); }
-    virtual void Next() { It->Next(); }
-    virtual bool IsDone() const { return It->IsDone(); }
-    virtual T GetCurrent() const { return It->GetCurrent(); }
+    void ExecuteGrowth() override;
 };
 
-// Адаптер для контейнерных классов STL
+// Р¤Р°Р±СЂРёРєР° СЃС‚СЂР°С‚РµРіРёР№
+GrowthStrategy* CreateGrowthStrategy(GrowthStrategyType type);
 
-template<typename ContainerType, typename ItemType>
-class ConstIteratorAdapter : public Iterator<ItemType> {
-protected:
-    ContainerType *Container;
-    typename ContainerType::const_iterator It;
+// РљРѕРЅРєСЂРµС‚РЅС‹Рµ С‚РёРїС‹ РґРµСЂРµРІСЊРµРІ
+class Oak : public Tree {
 public:
-    ConstIteratorAdapter(ContainerType *container)
-    : Container(container)
-    {
-        It = Container->begin();
-    }
-
-    virtual ~ConstIteratorAdapter() {}
-    virtual void First() { It = Container->begin(); }
-    virtual void Next() { It++; }
-    virtual bool IsDone() const { return (It == Container->end()); }
-    virtual ItemType GetCurrent() const { return *It; }
+    Oak();
+    void Grow() override;
 };
 
+class Pine : public Tree {
+public:
+    Pine();
+    void Grow() override;
+};
 
-#endif // TREES_PATTERN_TEMPLATES_H
+class Birch : public Tree {
+public:
+    Birch();
+    void Grow() override;
+};
+
+#endif // TREES_PATTERN_H

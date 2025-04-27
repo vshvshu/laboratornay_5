@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1745745407 source:c:\study\laba5\main.cpp
+	<iostream>
+	"trees_pattern.h"
+
+1745744828 c:\study\laba5\trees_pattern.h
+	<iostream>
+	<cstdlib>
+
