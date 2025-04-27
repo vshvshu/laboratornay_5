@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cstdlib>
-
+using namespace std;
 // Тип стратегии роста
 enum class GrowthStrategyType {
     NaturalGrowth,
@@ -25,7 +25,7 @@ enum class TreeType {
     Birch
 };
 
-// Базовый класс дерева
+// Базовый класс дерева с шаблонным методом
 class Tree {
 protected:
     TreeType Type;
@@ -34,12 +34,31 @@ protected:
     bool IsHealthy;
     GrowthStrategy* growthStrategy;
 
+    // Шаги алгоритма роста (методы-заготовки)
+    virtual void BeforeGrowth() = 0;
+    virtual void AfterGrowth() = 0;
+    virtual void SpecificGrowthBehavior() = 0;
+
 public:
     Tree(TreeType type);
     virtual ~Tree();
 
     void SetGrowthStrategy(GrowthStrategyType strategyType);
-    virtual void Grow();
+
+    // Шаблонный метод, определяющий структуру алгоритма роста
+    void Grow() {
+        if(!Healthy()) {
+            cout << "Cannot grow - tree is sick!" << endl;
+            return;
+        }
+
+        BeforeGrowth();
+        growthStrategy->ExecuteGrowth();
+        SpecificGrowthBehavior();
+        Height += 0.5;
+        Age++;
+        AfterGrowth();
+    }
 
     bool Healthy() const { return IsHealthy; }
     TreeType GetType() const { return Type; }
@@ -66,23 +85,59 @@ public:
 // Фабрика стратегий
 GrowthStrategy* CreateGrowthStrategy(GrowthStrategyType type);
 
-// Конкретные типы деревьев
+// Конкретные типы деревьев с реализацией шагов шаблонного метода
 class Oak : public Tree {
+protected:
+    void BeforeGrowth() override {
+        cout << "Oak tree starts growing..." << endl;
+    }
+
+    void AfterGrowth() override {
+        cout << "Oak tree finished growing. Current height: " << Height << endl;
+    }
+
+    void SpecificGrowthBehavior() override {
+        cout << "Oak is growing strong and wide." << endl;
+    }
+
 public:
     Oak();
-    void Grow() override;
 };
 
 class Pine : public Tree {
+protected:
+    void BeforeGrowth() override {
+        cout << "Pine tree starts growing..." << endl;
+    }
+
+    void AfterGrowth() override {
+        cout << "Pine tree finished growing. Current height: " << Height << endl;
+    }
+
+    void SpecificGrowthBehavior() override {
+        cout << "Pine is growing tall and narrow." << endl;
+    }
+
 public:
     Pine();
-    void Grow() override;
 };
 
 class Birch : public Tree {
+protected:
+    void BeforeGrowth() override {
+        cout << "Birch tree starts growing..." << endl;
+    }
+
+    void AfterGrowth() override {
+        cout << "Birch tree finished growing. Current height: " << Height << endl;
+    }
+
+    void SpecificGrowthBehavior() override {
+        cout << "Birch is growing with white bark." << endl;
+    }
+
 public:
     Birch();
-    void Grow() override;
 };
 
 #endif // TREES_PATTERN_H

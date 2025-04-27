@@ -9,11 +9,11 @@ void NaturalGrowthStrategy::ExecuteGrowth() {
 }
 
 void FastGrowthStrategy::ExecuteGrowth() {
-    cout << "Growing fast..." << endl;
+    cout << "Growing fast with nutrients..." << endl;
 }
 
 void SlowGrowthStrategy::ExecuteGrowth() {
-    cout << "Growing slowly..." << endl;
+    cout << "Growing slowly conserving resources..." << endl;
 }
 
 // Реализация фабричного метода
@@ -43,41 +43,14 @@ void Tree::SetGrowthStrategy(GrowthStrategyType strategyType) {
     growthStrategy = CreateGrowthStrategy(strategyType);
 }
 
-void Tree::Grow() {
-    if(Healthy()) {
-        growthStrategy->ExecuteGrowth();
-        Height += 0.5;
-        Age++;
-    } else {
-        cout << "Cannot grow - tree is sick!" << endl;
-    }
-}
-
-// Реализация методов конкретных деревьев
+// Реализация конструкторов конкретных деревьев
 Oak::Oak() : Tree(TreeType::Oak) {}
-
-void Oak::Grow() {
-    cout << "Oak tree: ";
-    Tree::Grow();
-}
-
 Pine::Pine() : Tree(TreeType::Pine) {}
-
-void Pine::Grow() {
-    cout << "Pine tree: ";
-    Tree::Grow();
-}
-
 Birch::Birch() : Tree(TreeType::Birch) {}
 
-void Birch::Grow() {
-    cout << "Birch tree: ";
-    Tree::Grow();
-}
-
 int main() {
-    // Демонстрация паттерна Стратегия
-    cout << "Strategy Pattern" << endl;
+    // Демонстрация паттернов
+    cout << "Strategy Pattern + Template Method Pattern" << endl;
 
     // Создаем деревья с разными стратегиями
     Oak oak;
@@ -90,7 +63,7 @@ int main() {
     birch.SetGrowthStrategy(GrowthStrategyType::SlowGrowth);
 
     cout << endl;
-    // Тестируем стратегии
+    // Тестируем рост деревьев
     cout << "First growth:" << endl;
     oak.Grow();
     pine.Grow();
@@ -102,6 +75,7 @@ int main() {
     oak.SetGrowthStrategy(GrowthStrategyType::FastGrowth);
     oak.Grow();
 
+    cout << endl;
     // Показываем состояние деревьев
     cout << "Tree states:" << endl;
     cout << "Oak - height: " << oak.GetHeight() << ", age: " << oak.GetAge() << endl;
